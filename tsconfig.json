@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "declaration": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": ["es2015", "dom"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "target": "es2015",
+    "jsx": "react",
+    "esModuleInterop": true,
+    "baseUrl": "./",
+    "outDir": "./lib"
+  },
+  "include": ["./src"],
+  "exclude": ["node_modules"],
+  "compileOnSave": false
+}

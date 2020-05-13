@@ -1,0 +1,21 @@
+{
+  "name": "openapi",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "license": "MIT",
+  "bin": {
+    "openapi": "./bin/openapi"
+  },
+  "dependencies": {
+    "@types/node": "^13.13.5",
+    "@types/prettier": "^2.0.0",
+    "@types/swagger-schema-official": "^2.0.21",
+    "prettier": "^2.0.5",
+    "swagger-schema-official": "^2.0.0-bab6bed",
+    "typescript": "^3.8.3"
+  },
+  "files": [
+    "bin",
+    "lib"
+  ]
+}
