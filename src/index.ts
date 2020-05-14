@@ -133,8 +133,8 @@ function generateProperties(schema: Swagger.Schema): string {
 
 function convert<
   T extends Swagger.BaseSchema & { name: string; required: boolean }
->(params: T[], def = 'null') {
-  if (!params.length) {
+>(params: T[] | undefined, def = 'null') {
+  if (!params || !params.length) {
     return def;
   }
   const obj = params.reduce((memo: any, param: T) => {
@@ -172,16 +172,12 @@ function generateMethod(
   if (operation.description) {
     result.push(`\n// ${operation.description}`);
   }
-  const params: Swagger.PathParameter[] = operation.parameters
-    ? (operation.parameters.filter((p: any) => p.in === 'path') as any)
-    : [];
-
-  const paramsType = convert(params);
-
-  const body = operation.parameters
-    ? (operation.parameters.filter((p: any) => p.in === 'formData') as any)
-    : [];
-  const bodyType = convert(body);
+  const paramsType = convert(
+    operation.parameters?.filter((p: any) => p.in === 'path') as any
+  );
+  const bodyType = convert(
+    operation.parameters?.filter((p: any) => p.in === 'formData') as any
+  );
 
   const resultType =
     Object.keys(operation.responses)
