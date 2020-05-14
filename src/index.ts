@@ -166,18 +166,14 @@ function generateInterface(name: string, schema: Swagger.Schema): string {
 function generateMethod(
   method: string,
   url: string,
-  operation: Swagger.Operation
+  operation: Swagger.Operation,
+  paramsType: string,
+  bodyType: string,
 ) {
   const result: string[] = [];
   if (operation.description) {
     result.push(`\n// ${operation.description}`);
   }
-  const paramsType = convert(
-    operation.parameters?.filter((p: any) => p.in === 'path') as any
-  );
-  const bodyType = convert(
-    operation.parameters?.filter((p: any) => p.in === 'formData') as any
-  );
 
   const resultType =
     Object.keys(operation.responses)
@@ -217,6 +213,8 @@ function generateMethod(
 
 function generateAPI(docs: Swagger.Spec) {
   const result: string[] = [];
+  const typesResult: string[] = [];
+
   const paths = docs.paths;
 
   Object.keys(paths).forEach((url) => {
@@ -225,7 +223,25 @@ function generateAPI(docs: Swagger.Spec) {
       if (path[method] === undefined) {
         return;
       }
-      const res = generateMethod(method, url, path[method]!);
+      const operation = path[method]!;
+      const paramsType = convert(
+        operation.parameters?.filter((p: any) => p.in === 'path') as any
+      );
+
+      const paramsName = paramsType !== 'null' ? `IParams${operation.operationId!}` : 'null';
+      if (paramsName !== 'null') {
+        typesResult.push(`export interface ${paramsName} ${paramsType}`);
+      }
+
+      const bodyType = convert(
+        operation.parameters?.filter((p: any) => p.in === 'formData') as any
+      );
+      const bodyName = bodyType !== 'null' ? `IBody${operation.operationId!}` : 'null';
+      if (bodyName !== 'null') {
+        typesResult.push(`export interface ${bodyName} ${bodyType}`);
+      }
+
+      const res = generateMethod(method, url, path[method]!, paramsName, bodyName);
       result.push(res);
     });
   });
@@ -238,6 +254,7 @@ function generateAPI(docs: Swagger.Spec) {
   );
 
   return [
+    typesResult.join('\n'),
     'export type IFileType$$ = string;',
     'export abstract class API {',
     'abstract call(m: string, url: string, body: any): Promise<any>;\n',
