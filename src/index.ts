@@ -64,6 +64,96 @@ const stringToPath = function (str: string) {
   return result;
 };
 
+function generateProperties(schema: Swagger.Schema): string {
+  const result: string[] = [];
+
+  if (schema.$ref) {
+    result.push(getRefName(schema.$ref));
+  }
+
+  switch (schema.type as string) {
+    case 'object':
+      {
+        result.push('{');
+        const props = schema.properties ?? {};
+        Object.keys(props).forEach((key) => {
+          const p = props[key];
+          result.push(`${key}: ${generateProperties(p)};`);
+        });
+        result.push('}');
+      }
+      break;
+    case 'array':
+      {
+        const items = schema.items;
+        const itemType = Array.isArray(items)
+          ? items.map((item) => generateProperties(item)).join(' | ')
+          : items
+          ? generateProperties(items)
+          : 'unknown';
+        result.push(`Array<${itemType}>`);
+      }
+      break;
+
+    case 'string':
+      if (schema.enum) {
+        result.push(schema.enum.map((p) => JSON.stringify(p)).join('|'));
+      } else {
+        result.push('string');
+      }
+      break;
+
+    case 'boolean':
+    case 'Boolean':
+      if (schema.enum) {
+        result.push(schema.enum.join('|'));
+      } else {
+        result.push('boolean');
+      }
+      break;
+
+    case 'number':
+    case 'integer':
+    case 'float':
+      if (schema.enum) {
+        result.push(schema.enum.join('|'));
+      } else {
+        result.push('number');
+      }
+      break;
+
+    case 'file':
+      result.push('IFileType$$');
+    default:
+      break;
+  }
+
+  return result.join('\n');
+}
+
+function convert<
+  T extends Swagger.BaseSchema & { name: string; required: boolean }
+>(params: T[], def = 'null') {
+  if (!params.length) {
+    return def;
+  }
+  const obj = params.reduce((memo: any, param: T) => {
+    const namePath = stringToPath(param.name);
+    let ptr = memo;
+    const value = generateProperties(param);
+    for (let i = 0, iLen = namePath.length; i < iLen; i++) {
+      if (i + 1 === iLen) {
+        const name = param.required ? namePath[i] : `${namePath[i]}?`;
+        ptr[name] = value;
+      } else {
+        ptr = ptr[namePath[i]] ?? (ptr[namePath[i]] = {});
+      }
+    }
+    return memo;
+  }, {} as any);
+  return objToString(obj);
+}
+
 class Generator {
   private docs: Swagger.Spec;
   constructor(data: string) {
@@ -118,78 +208,13 @@ class Generator {
   generateInterface(name: string, schema: Swagger.Schema): string {
     return [
       schema.description ? `// ${schema.description}` : '',
-      `export interface ${name}` + this.generateProperties(schema),
+      `export interface ${name}` + generateProperties(schema),
     ]
       .filter((p) => p)
       .join('\n');
   }
 
-  generateProperties(schema: Swagger.Schema): string {
-    const result: string[] = [];
 
-    if (schema.$ref) {
-      result.push(getRefName(schema.$ref));
-    }
-
-    switch (schema.type as string) {
-      case 'object':
-        {
-          result.push('{');
-          const props = schema.properties ?? {};
-          Object.keys(props).forEach((key) => {
-            const p = props[key];
-            result.push(`${key}: ${this.generateProperties(p)};`);
-          });
-          result.push('}');
-        }
-        break;
-      case 'array':
-        {
-          const items = schema.items;
-          const itemType = Array.isArray(items)
-            ? items.map((item) => this.generateProperties(item)).join(' | ')
-            : items
-            ? this.generateProperties(items)
-            : 'unknown';
-          result.push(`Array<${itemType}>`);
-        }
-        break;
-
-      case 'string':
-        if (schema.enum) {
-          result.push(schema.enum.map((p) => JSON.stringify(p)).join('|'));
-        } else {
-          result.push('string');
-        }
-        break;
-
-      case 'boolean':
-      case 'Boolean':
-        if (schema.enum) {
-          result.push(schema.enum.join('|'));
-        } else {
-          result.push('boolean');
-        }
-        break;
-
-      case 'number':
-      case 'integer':
-      case 'float':
-        if (schema.enum) {
-          result.push(schema.enum.join('|'));
-        } else {
-          result.push('number');
-        }
-        break;
-
-      case 'file':
-        result.push('IFileType$$');
-      default:
-        break;
-    }
-
-    return result.join('\n');
-  }
 
   generateMethod(method: string, url: string, operation: Swagger.Operation) {
     const result: string[] = [];
@@ -200,28 +225,12 @@ class Generator {
       ? (operation.parameters.filter((p: any) => p.in === 'path') as any)
       : [];
 
-    let paramsType = 'null';
-    if (params.length) {
-      const obj = params.reduce((memo: any, param: Swagger.PathParameter) => {
-        const namePath = stringToPath(param.name);
-        let ptr = memo;
-        const value = this.generateProperties(param);
-        for (let i = 0, iLen = namePath.length; i < iLen; i++) {
-          if (i + 1 === iLen) {
-            const name = param.required ? namePath[i] : `${namePath[i]}?`;
-            ptr[name] = value;
-          } else {
-            ptr = ptr[namePath[i]] ?? (ptr[namePath[i]] = {});
-          }
-        }
-        return memo;
-      }, {} as any);
-      paramsType = objToString(obj);
-    }
+    const paramsType = convert(params);
 
-    const body: Swagger.FormDataParameter[] = operation.parameters
+    const body = operation.parameters
       ? (operation.parameters.filter((p: any) => p.in === 'formData') as any)
       : [];
+    const bodyType = convert(body);
 
     const resultType =
       Object.keys(operation.responses)
@@ -236,7 +245,7 @@ class Generator {
             const res = item as Swagger.Response;
 
             if (res.schema) {
-              const name = this.generateProperties(res.schema);
+              const name = generateProperties(res.schema);
               memo.push(name);
             }
           }
@@ -244,25 +253,6 @@ class Generator {
           return memo;
         }, [] as string[])
         .join('|') || 'unknown';
-
-    let bodyType = 'null';
-    if (body.length) {
-      const obj = body.reduce((memo, param) => {
-        const namePath = stringToPath(param.name);
-        let ptr = memo;
-        const value = this.generateProperties(param);
-        for (let i = 0, iLen = namePath.length; i < iLen; i++) {
-          if (i + 1 === iLen) {
-            const name = param.required ? namePath[i] : `${namePath[i]}?`;
-            ptr[name] = value;
-          } else {
-            ptr = ptr[namePath[i]] ?? (ptr[namePath[i]] = {});
-          }
-        }
-        return memo;
-      }, {} as any);
-      bodyType = objToString(obj);
-    }
 
     const paramTocken =
       paramsType === 'null' && bodyType === 'null'
@@ -299,13 +289,15 @@ if (process.argv.length !== 3) {
   process.exit(1);
 }
 
-read(process.argv[2]).then((data) => {
-  const gen = new Generator(data);
-  const code = gen.generate();
-  return prettier.format(code, {
-    tabWidth: 2,
-    semi: true,
-    singleQuote: true,
-    parser: 'typescript',
-  });
-}).then(console.log);
+read(process.argv[2])
+  .then((data) => {
+    const gen = new Generator(data);
+    const code = gen.generate();
+    return prettier.format(code, {
+      tabWidth: 2,
+      semi: true,
+      singleQuote: true,
+      parser: 'typescript',
+    });
+  })
+  .then(console.log);
