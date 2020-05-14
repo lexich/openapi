@@ -154,120 +154,114 @@ function convert<
   return objToString(obj);
 }
 
-class Generator {
-  private docs: Swagger.Spec;
-  constructor(data: string) {
-    this.docs = JSON.parse(data);
+function generateInterface(name: string, schema: Swagger.Schema): string {
+  return [
+    schema.description ? `// ${schema.description}` : '',
+    `export interface ${name}` + generateProperties(schema),
+  ]
+    .filter((p) => p)
+    .join('\n');
+}
+
+function generateMethod(
+  method: string,
+  url: string,
+  operation: Swagger.Operation
+) {
+  const result: string[] = [];
+  if (operation.description) {
+    result.push(`\n// ${operation.description}`);
   }
+  const params: Swagger.PathParameter[] = operation.parameters
+    ? (operation.parameters.filter((p: any) => p.in === 'path') as any)
+    : [];
 
-  generate() {
-    const result: string[] = [];
-    const definitions = this.docs.definitions;
-    if (definitions) {
-      Object.keys(definitions).forEach((def) => {
-        const body = definitions[def];
-        result.push(this.generateInterface(def, body));
-      });
-    }
-    result.push(this.generateAPI());
+  const paramsType = convert(params);
 
-    return result.join('\n');
-  }
+  const body = operation.parameters
+    ? (operation.parameters.filter((p: any) => p.in === 'formData') as any)
+    : [];
+  const bodyType = convert(body);
 
-  generateAPI() {
-    const result: string[] = [];
-    const paths = this.docs.paths;
+  const resultType =
+    Object.keys(operation.responses)
+      .reduce((memo, key) => {
+        const item = operation.responses[key];
 
-    Object.keys(paths).forEach((url) => {
-      const path = paths[url];
-      TMETHOD.forEach((method) => {
-        if (path[method] === undefined) {
-          return;
-        }
-        const res = this.generateMethod(method, url, path[method]!);
-        result.push(res);
-      });
-    });
+        const ref = item as Swagger.Reference;
 
-    result.push(
-      `get(m: string, url: string, param: any, body: any): Promise<any> {`,
-      `url = !param ? url : Object.keys(param).reduce((memo, key) => memo.replace(new RegExp('{' + key + '}'), param[key]), url);`,
-      `return this.call(m, url, body);`,
-      `}`
-    );
+        if (ref.$ref) {
+          memo.push(getRefName(ref.$ref));
+        } else {
+          const res = item as Swagger.Response;
 
-    return [
-      'export type IFileType$$ = string;',
-      'export abstract class API {',
-      'abstract call(m: string, url: string, body: any): Promise<any>;\n',
-      result.join('\n'),
-      '}',
-    ].join('\n');
-  }
-
-  generateInterface(name: string, schema: Swagger.Schema): string {
-    return [
-      schema.description ? `// ${schema.description}` : '',
-      `export interface ${name}` + generateProperties(schema),
-    ]
-      .filter((p) => p)
-      .join('\n');
-  }
-
-
-
-  generateMethod(method: string, url: string, operation: Swagger.Operation) {
-    const result: string[] = [];
-    if (operation.description) {
-      result.push(`\n// ${operation.description}`);
-    }
-    const params: Swagger.PathParameter[] = operation.parameters
-      ? (operation.parameters.filter((p: any) => p.in === 'path') as any)
-      : [];
-
-    const paramsType = convert(params);
-
-    const body = operation.parameters
-      ? (operation.parameters.filter((p: any) => p.in === 'formData') as any)
-      : [];
-    const bodyType = convert(body);
-
-    const resultType =
-      Object.keys(operation.responses)
-        .reduce((memo, key) => {
-          const item = operation.responses[key];
-
-          const ref = item as Swagger.Reference;
-
-          if (ref.$ref) {
-            memo.push(getRefName(ref.$ref));
-          } else {
-            const res = item as Swagger.Response;
-
-            if (res.schema) {
-              const name = generateProperties(res.schema);
-              memo.push(name);
-            }
+          if (res.schema) {
+            const name = generateProperties(res.schema);
+            memo.push(name);
           }
+        }
 
-          return memo;
-        }, [] as string[])
-        .join('|') || 'unknown';
+        return memo;
+      }, [] as string[])
+      .join('|') || 'unknown';
 
-    const paramTocken =
-      paramsType === 'null' && bodyType === 'null'
-        ? 'param?: null'
-        : `param: ${paramsType}`;
+  const paramTocken =
+    paramsType === 'null' && bodyType === 'null'
+      ? 'param?: null'
+      : `param: ${paramsType}`;
 
-    const bodyTocken =
-      bodyType === 'null' ? 'body?: null' : `body: ${bodyType}`;
+  const bodyTocken = bodyType === 'null' ? 'body?: null' : `body: ${bodyType}`;
 
-    result.push(
-      `get(m: '${method}', url: '${url}', ${paramTocken}, ${bodyTocken}): Promise<${resultType}>;`
-    );
+  result.push(
+    `get(m: '${method}', url: '${url}', ${paramTocken}, ${bodyTocken}): Promise<${resultType}>;`
+  );
 
-    return result.join('\n');
+  return result.join('\n');
+}
+
+function generateAPI(docs: Swagger.Spec) {
+  const result: string[] = [];
+  const paths = docs.paths;
+
+  Object.keys(paths).forEach((url) => {
+    const path = paths[url];
+    TMETHOD.forEach((method) => {
+      if (path[method] === undefined) {
+        return;
+      }
+      const res = generateMethod(method, url, path[method]!);
+      result.push(res);
+    });
+  });
+
+  result.push(
+    `get(m: string, url: string, param: any, body: any): Promise<any> {`,
+    `url = !param ? url : Object.keys(param).reduce((memo, key) => memo.replace(new RegExp('{' + key + '}'), param[key]), url);`,
+    `return this.call(m, url, body);`,
+    `}`
+  );
+
+  return [
+    'export type IFileType$$ = string;',
+    'export abstract class API {',
+    'abstract call(m: string, url: string, body: any): Promise<any>;\n',
+    result.join('\n'),
+    '}',
+  ].join('\n');
+}
+
+function generate(docs: Swagger.Spec) {
+  const result: string[] = [];
+  const definitions = docs.definitions;
+  if (definitions) {
+    Object.keys(definitions).forEach((def) => {
+      const body = definitions[def];
+      result.push(generateInterface(def, body));
+    });
   }
+  result.push(generateAPI(docs));
+
+  return result.join('\n');
 }
 
 function read(url: string) {
@@ -291,8 +285,8 @@ if (process.argv.length !== 3) {
 
 read(process.argv[2])
   .then((data) => {
-    const gen = new Generator(data);
-    const code = gen.generate();
+    const docs: Swagger.Spec = JSON.parse(data);
+    const code = generate(docs);
     return prettier.format(code, {
       tabWidth: 2,
       semi: true,
