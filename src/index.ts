@@ -21,7 +21,12 @@ function objToString(obj: any): string {
   const result: string[] = ['{'];
   Object.keys(obj).forEach((k) => {
     const val = obj[k];
-    result.push(JSON.stringify(k) + ':');
+    if (k[k.length - 1] === '?') {
+      result.push(JSON.stringify(k.slice(0, k.length - 1)) + '?:');
+    } else {
+      result.push(JSON.stringify(k) + ':');
+    }
+
     if (typeof val !== 'object') {
       result.push(`${val};`);
     } else {
@@ -203,7 +208,8 @@ class Generator {
         const value = this.generateProperties(param);
         for (let i = 0, iLen = namePath.length; i < iLen; i++) {
           if (i + 1 === iLen) {
-            ptr[namePath[i]] = value;
+            const name = param.required ? namePath[i] : `${namePath[i]}?`;
+            ptr[name] = value;
           } else {
             ptr = ptr[namePath[i]] ?? (ptr[namePath[i]] = {});
           }
@@ -247,7 +253,8 @@ class Generator {
         const value = this.generateProperties(param);
         for (let i = 0, iLen = namePath.length; i < iLen; i++) {
           if (i + 1 === iLen) {
-            ptr[namePath[i]] = value;
+            const name = param.required ? namePath[i] : `${namePath[i]}?`;
+            ptr[name] = value;
           } else {
             ptr = ptr[namePath[i]] ?? (ptr[namePath[i]] = {});
           }
