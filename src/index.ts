@@ -2,6 +2,7 @@ import * as Swagger from 'swagger-schema-official';
 import prettier from 'prettier';
 import * as http from 'http';
 import groupBy from 'lodash/groupBy';
+import upperFirst from 'lodash/upperFirst';
 
 type TKey = 'get' | 'put' | 'post' | 'delete' | 'options' | 'head' | 'patch';
 const TMETHOD: TKey[] = [
@@ -227,7 +228,7 @@ function generateAPI(docs: Swagger.Spec) {
       const options = Object.keys(groups).reduce((memo, groupName) => {
         const val = convert(groups[groupName]);
         if (val !== 'null') {
-          const name = `I${groupName}${operation.operationId!}`;
+          const name = `I${upperFirst(groupName)}${upperFirst(operation.operationId!)}`;
           typesResult.push(`export interface ${name} ${val}`);
           memo[groupName] = name;
         }
@@ -254,8 +255,9 @@ function generateAPI(docs: Swagger.Spec) {
   return [
     typesResult.join('\n'),
     'export type IFileType$$ = string;',
+    'export interface IOptionsBase$$ { body?: any; query?: any; header?: any; formData?: any; }',
     'export abstract class API<TOptions = {}> {',
-    'abstract call(m: string, url: string, body: any): Promise<any>;\n',
+    'abstract call(m: string, url: string, opts: IOptionsBase$$ & TOptions): Promise<any>;\n',
     result.join('\n'),
     '}',
   ].join('\n');
