@@ -1,6 +1,7 @@
 import * as Swagger from 'swagger-schema-official';
 import prettier from 'prettier';
 import * as http from 'http';
+import groupBy from 'lodash/groupBy';
 
 type TKey = 'get' | 'put' | 'post' | 'delete' | 'options' | 'head' | 'patch';
 const TMETHOD: TKey[] = [
@@ -131,9 +132,9 @@ function generateProperties(schema: Swagger.Schema): string {
   return result.join('\n');
 }
 
-function convert<
-  T extends Swagger.BaseSchema & { name: string; required: boolean }
->(params: T[] | undefined, def = 'null') {
+type TSchema = Swagger.BaseSchema & { name: string; required: boolean };
+
+function convert<T extends TSchema>(params: T[] | undefined, def = 'null') {
   if (!params || !params.length) {
     return def;
   }
@@ -167,8 +168,7 @@ function generateMethod(
   method: string,
   url: string,
   operation: Swagger.Operation,
-  paramsType: string,
-  bodyType: string,
+  options: Record<string, string>
 ) {
   const result: string[] = [];
   if (operation.description) {
@@ -197,15 +197,9 @@ function generateMethod(
       }, [] as string[])
       .join('|') || 'unknown';
 
-  const paramTocken =
-    paramsType === 'null' && bodyType === 'null'
-      ? 'param?: null'
-      : `param: ${paramsType}`;
-
-  const bodyTocken = bodyType === 'null' ? 'body?: null' : `body: ${bodyType}`;
-
+  const optionsType = objToString(options)
   result.push(
-    `get(m: '${method}', url: '${url}', ${paramTocken}, ${bodyTocken}): Promise<${resultType}>;`
+    `get(m: '${method}', url: '${url}', options: ${optionsType} & TOptions): Promise<${resultType}>;`
   );
 
   return result.join('\n');
@@ -224,39 +218,43 @@ function generateAPI(docs: Swagger.Spec) {
         return;
       }
       const operation = path[method]!;
-      const paramsType = convert(
-        operation.parameters?.filter((p: any) => p.in === 'path') as any
+
+      const groups = groupBy<TSchema>(
+        operation.parameters?.filter((p: any) => p.in) as any ?? [],
+        (p: any) => p.in
       );
 
-      const paramsName = paramsType !== 'null' ? `IParams${operation.operationId!}` : 'null';
-      if (paramsName !== 'null') {
-        typesResult.push(`export interface ${paramsName} ${paramsType}`);
-      }
+      const options = Object.keys(groups).reduce((memo, groupName) => {
+        const val = convert(groups[groupName]);
+        if (val !== 'null') {
+          const name = `I${groupName}${operation.operationId!}`;
+          typesResult.push(`export interface ${name} ${val}`);
+          memo[groupName] = name;
+        }
+        return memo;
+      }, {} as Record<string, string>)
 
-      const bodyType = convert(
-        operation.parameters?.filter((p: any) => p.in === 'formData') as any
+      const res = generateMethod(
+        method,
+        url,
+        path[method]!,
+        options
       );
-      const bodyName = bodyType !== 'null' ? `IBody${operation.operationId!}` : 'null';
-      if (bodyName !== 'null') {
-        typesResult.push(`export interface ${bodyName} ${bodyType}`);
-      }
-
-      const res = generateMethod(method, url, path[method]!, paramsName, bodyName);
       result.push(res);
     });
   });
 
   result.push(
-    `get(m: string, url: string, param: any, body: any): Promise<any> {`,
-    `url = !param ? url : Object.keys(param).reduce((memo, key) => memo.replace(new RegExp('{' + key + '}'), param[key]), url);`,
-    `return this.call(m, url, body);`,
+    `get(m: string, url: string, {path, ...options}: any): Promise<any> {`,
+    `url = !path ? url : Object.keys(path).reduce((memo, key) => memo.replace(new RegExp('{' + key + '}'), path[key]), url);`,
+    `return this.call(m, url, options);`,
     `}`
   );
 
   return [
     typesResult.join('\n'),
     'export type IFileType$$ = string;',
-    'export abstract class API {',
+    'export abstract class API<TOptions = {}> {',
     'abstract call(m: string, url: string, body: any): Promise<any>;\n',
     result.join('\n'),
     '}',
