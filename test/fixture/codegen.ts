@@ -202,17 +202,25 @@ export abstract class API<TOptions = {}> {
   get(
     param: IGetV1OfferingsSlugRequest & TOptions
   ): Promise<OfferingSerializer>;
-  get(options: IOptionsBaseT<{}> & TOptions): Promise<any> {
-    options.url = !options.path
-      ? options.url
-      : Object.keys(options.path).reduce(
-          (memo, key) =>
-            memo.replace(
-              new RegExp('{' + key + '}'),
-              (options.path as any)[key]
-            ),
-          options.url
-        );
+  get(params: IOptionsBaseT<{}> & TOptions): Promise<any> {
+    const options: any = params;
+    if (options.path) {
+      options.url = Object.keys(options.path).reduce(
+        (memo, key) =>
+          memo.replace(new RegExp('{' + key + '}'), options.path[key]),
+        options.url
+      );
+    }
+    if (options.query) {
+      const query = Object.keys(options.query).reduce((memo, key) => {
+        memo.push(key + '=' + options.query[key]);
+        return memo;
+      }, [] as string[]);
+      if (query.length) {
+        options.url +=
+          (options.url.indexOf('?') === -1 ? '?' : '') + query.join('&');
+      }
+    }
     return this.call(options);
   }
 }
