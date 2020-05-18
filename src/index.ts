@@ -156,18 +156,8 @@ function convert<T extends TSchema>(params: T[] | undefined, def = 'null') {
   return objToString(obj);
 }
 
-function generateInterface(name: string, schema: Swagger.Schema): string {
-  return [
-    schema.description ? `// ${schema.description}` : '',
-    `export interface ${name}` + generateProperties(schema),
-  ]
-    .filter((p) => p)
-    .join('\n');
-}
-
 function generateMethod(
-  method: string,
-  url: string,
+  requestName: string,
   operation: Swagger.Operation,
   options: Record<string, string>
 ) {
@@ -198,10 +188,7 @@ function generateMethod(
       }, [] as string[])
       .join('|') || 'unknown';
 
-  const optionsType = objToString(options)
-  result.push(
-    `get(m: '${method}', url: '${url}', options: ${optionsType} & TOptions): Promise<${resultType}>;`
-  );
+  result.push(`get(param: ${requestName} & TOptions): Promise<${resultType}>;`);
 
   return result.join('\n');
 }
@@ -221,34 +208,38 @@ function generateAPI(docs: Swagger.Spec) {
       const operation = path[method]!;
 
       const groups = groupBy<TSchema>(
-        operation.parameters?.filter((p: any) => p.in) as any ?? [],
+        (operation.parameters?.filter((p: any) => p.in) as any) ?? [],
         (p: any) => p.in
       );
 
+      const NameParam = upperFirst(operation.operationId!);
       const options = Object.keys(groups).reduce((memo, groupName) => {
         const val = convert(groups[groupName]);
         if (val !== 'null') {
-          const name = `I${upperFirst(groupName)}${upperFirst(operation.operationId!)}`;
+          const name = `I${upperFirst(groupName)}${NameParam}`;
           typesResult.push(`export interface ${name} ${val}`);
           memo[groupName] = name;
         }
         return memo;
-      }, {} as Record<string, string>)
+      }, {} as Record<string, string>);
 
-      const res = generateMethod(
-        method,
-        url,
-        path[method]!,
-        options
-      );
+      const RequestName = `I${NameParam}Request`;
+      const typeParams = objToString({
+        method: JSON.stringify(method.toUpperCase()),
+        url: JSON.stringify(url),
+        ...options,
+      });
+      typesResult.push(`export interface ${RequestName} ${typeParams}`);
+
+      const res = generateMethod(RequestName, path[method]!, options);
       result.push(res);
     });
   });
 
   result.push(
-    `get(m: string, url: string, {path, ...options}: any): Promise<any> {`,
-    `url = !path ? url : Object.keys(path).reduce((memo, key) => memo.replace(new RegExp('{' + key + '}'), path[key]), url);`,
-    `return this.call(m, url, options);`,
+    `get({ path, ...options}: any): Promise<any> {`,
+    `options.url = !path ? options.url : Object.keys(path).reduce((memo, key) => memo.replace(new RegExp('{' + key + '}'), path[key]), options.url);`,
+    `return this.call(options);`,
     `}`
   );
 
@@ -257,7 +248,7 @@ function generateAPI(docs: Swagger.Spec) {
     'export type IFileType$$ = string;',
     'export interface IOptionsBase$$ { body?: any; query?: any; header?: any; formData?: any; }',
     'export abstract class API<TOptions = {}> {',
-    'abstract call(m: string, url: string, opts: IOptionsBase$$ & TOptions): Promise<any>;\n',
+    'abstract call(param: any & TOptions): Promise<any>;\n',
     result.join('\n'),
     '}',
   ].join('\n');
@@ -268,8 +259,14 @@ function generate(docs: Swagger.Spec) {
   const definitions = docs.definitions;
   if (definitions) {
     Object.keys(definitions).forEach((def) => {
-      const body = definitions[def];
-      result.push(generateInterface(def, body));
+      const schema = definitions[def];
+      const code = [
+        schema.description ? `// ${schema.description}` : '',
+        `export interface ${def}` + generateProperties(schema),
+      ]
+        .filter((p) => p)
+        .join('\n');
+      result.push(code);
     });
   }
   result.push(generateAPI(docs));
