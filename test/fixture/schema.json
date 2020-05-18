@@ -1,0 +1,317 @@
+{
+  "info": { "title": "API", "version": "0.0.1" },
+  "swagger": "2.0",
+  "produces": ["application/json; charset=UTF-8"],
+  "host": "localhost:3000",
+  "tags": [{ "name": "v1", "description": "Operations about v1s" }],
+  "paths": {
+    "/v1/offerings/{slug}": {
+      "get": {
+        "description": "Get Offering",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "description": "Offering Slug",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "perks, documents, location_restricted,\n                        tags, press, pitch_sections, faqs,\n                        risks, roles_team_members, questions,\n                        form_c, investment_reasons, investment_reasons.user including. Pass separated with `,` in any order",
+            "type": "string",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get Offering",
+            "schema": { "$ref": "#/definitions/OfferingSerializer" }
+          }
+        },
+        "tags": ["v1"],
+        "operationId": "getV1OfferingsSlug"
+      }
+    }
+  },
+  "definitions": {
+    "OfferingSerializer": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "type": { "type": "string" },
+            "attributes": {
+              "type": "object",
+              "properties": {
+                "company_name": { "type": "string" },
+                "state": { "type": "string" },
+                "pitch": { "type": "string" },
+                "max_raise_amount_cents": { "type": "string" },
+                "description": { "type": "string" },
+                "logo_url": { "type": "string" },
+                "cover_url": { "type": "string" },
+                "supported_by_ios_app": { "type": "string" },
+                "pitch_highlights": { "type": "string" },
+                "requires_w9": { "type": "boolean" },
+                "requires_alcohol_reps": { "type": "boolean" },
+                "reached_max_raise_amount": { "type": "boolean" },
+                "reached_min_raise_amount": { "type": "boolean" },
+                "min_investment_amount_cents": { "type": "integer" },
+                "max_investment_amount_cents": { "type": "integer" },
+                "min_raise_amount_cents": { "type": "integer" },
+                "min_wire_amount_cents": { "type": "integer" },
+                "investment_amount_multiplier_cents": { "type": "integer" },
+                "investors_count": { "type": "integer" },
+                "discussions_count": { "type": "integer" },
+                "reviews_count": { "type": "integer" },
+                "follows_count": { "type": "integer" },
+                "updates_count": { "type": "integer" },
+                "avatar_extra_small_url": { "type": "string" },
+                "avatar_extra_small_2x_url": { "type": "string" },
+                "avatar_small_url": { "type": "string" },
+                "avatar_small_2x_url": { "type": "string" },
+                "avatar_medium_url": { "type": "string" },
+                "avatar_medium_2x_url": { "type": "string" },
+                "avatar_large_url": { "type": "string" },
+                "avatar_large_2x_url": { "type": "string" },
+                "card_image_url": { "type": "string" },
+                "video_url": { "type": "string" },
+                "deadline": { "type": "integer" },
+                "investment_change_deadline": { "type": "integer" },
+                "card_enabled": { "type": "boolean" },
+                "published_at": { "type": "integer" },
+                "amount_raised_cents": { "type": "integer" },
+                "amount_raised_this_week_cents": { "type": "integer" },
+                "custodial": { "type": "boolean" }
+              }
+            },
+            "relationships": {
+              "type": "object",
+              "properties": {
+                "security": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "type": { "type": "string" }
+                      }
+                    }
+                  }
+                },
+                "perks": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "faqs": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "previous_campaigns": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "investment_reasons": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "documents": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "risks": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "questions": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "press": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "roles_team_members": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "tags": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "pitch_sections": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "exit": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "type": { "type": "string" }
+                      }
+                    }
+                  }
+                },
+                "form_c": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "type": { "type": "string" }
+                      }
+                    }
+                  }
+                },
+                "issuer_profile": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "type": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "Get all offerings"
+    }
+  }
+}
