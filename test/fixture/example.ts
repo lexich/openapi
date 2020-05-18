@@ -27,7 +27,7 @@ class Client extends API {
 const client = new Client();
 
 export function test1() {
-  return client.get({
+  return client.request({
     method: 'GET',
     url: '/v1/offerings/{slug}',
     path: { slug: 'test' },
@@ -36,7 +36,11 @@ export function test1() {
 }
 
 export async function test2() {
-  const { data: { attributes: { first_name, last_name }}} = await client.get({
+  const {
+    data: {
+      attributes: { first_name, last_name },
+    },
+  } = await client.request({
     method: 'POST',
     url: '/v1/auth/{provider}/oauth',
     path: { provider: 'twitter' },

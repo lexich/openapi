@@ -186,7 +186,7 @@ function generateMethod(requestName: string, operation: Swagger.Operation) {
       }, [] as string[])
       .join('|') || 'unknown';
 
-  result.push(`get(param: ${requestName} & TOptions): Promise<${resultType}>;`);
+  result.push(`request(param: ${requestName} & TOptions): Promise<${resultType}>;`);
 
   return result.join('\n');
 }
@@ -235,7 +235,7 @@ function generateAPI(docs: Swagger.Spec) {
   });
 
   result.push(
-    `get(params: IOptionsBaseT<{}> & TOptions): Promise<any> {
+    `request(params: IOptionsBaseT<{}> & TOptions): Promise<any> {
         const options: any = params;
         if (options.path) {
           options.url = Object.keys(options.path).reduce(

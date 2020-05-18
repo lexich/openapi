@@ -194,15 +194,15 @@ export abstract class API<TOptions = {}> {
   abstract call(param: IOptionsBaseT<any> & TOptions): Promise<any>;
 
   // auth with social networks
-  get(
+  request(
     param: IPostV1AuthProviderOauthRequest & TOptions
   ): Promise<AuthSerializer>;
 
   // Get Offering
-  get(
+  request(
     param: IGetV1OfferingsSlugRequest & TOptions
   ): Promise<OfferingSerializer>;
-  get(params: IOptionsBaseT<{}> & TOptions): Promise<any> {
+  request(params: IOptionsBaseT<{}> & TOptions): Promise<any> {
     const options: any = params;
     if (options.path) {
       options.url = Object.keys(options.path).reduce(

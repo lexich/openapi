@@ -6,6 +6,9 @@
   "bin": {
     "openapi": "./bin/openapi"
   },
+  "scripts": {
+    "test": "./node_modules/.bin/jest"
+  },
   "dependencies": {
     "lodash": "^4.17.15",
     "prettier": "^2.0.5"
