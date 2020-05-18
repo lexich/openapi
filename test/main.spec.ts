@@ -12,25 +12,14 @@ describe('main', () => {
   it('generate', async () => {
     const code = transform(data);
     expect(code).toMatchSnapshot();
-    const filePath = path.resolve(__dirname, 'code.ts');
-
-    fs.writeFileSync(filePath, code);
-
-    const API = require(filePath).API;
-    class Client extends API {
-        obj: any = null;
-        call(param: any) {
-            this.obj = param;
-            return Promise.resolve();
-        }
-    }
-    const client = new Client();
-    await client.get({
-        method: 'GET',
-        url: '/v1/offerings/{slug}',
-        path: { slug: 'test' },
-        query: { include: 'test' }
+    const filePath = path.resolve(__dirname, 'fixture', 'generate.ts');
+    await new Promise((resolve, reject) => {
+        fs.writeFile(filePath, code, (err) => {
+            err ? reject(err) : resolve();
+        });
     });
-    expect(client.obj).toMatchSnapshot();
+    const test = require('./fixture/impl').test;
+    const result = await test();
+    expect(result).toMatchSnapshot();
   });
 });

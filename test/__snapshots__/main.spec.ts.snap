@@ -1,7 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`main generate 1`] = `
-"// Get all offerings
+"// Set user password
+export interface AuthSerializer {
+  data: {
+    id: string;
+    type: string;
+    attributes: {
+      first_name: string;
+      last_name: string;
+      slug: string;
+      avatar_url: string;
+      jwt_token: string;
+      need_set_password: boolean;
+    };
+  };
+}
+// Get all offerings
 export interface OfferingSerializer {
   data: {
     id: string;
@@ -142,6 +157,20 @@ export interface OfferingSerializer {
     };
   };
 }
+export interface IPathPostV1AuthProviderOauth {
+  provider: 'facebook' | 'twitter';
+}
+export interface IFormDataPostV1AuthProviderOauth {
+  oauth_token: string;
+  oauth_token_secret?: string;
+  referral_token?: string;
+}
+export interface IPostV1AuthProviderOauthRequest {
+  method: 'POST';
+  url: '/v1/auth/{provider}/oauth';
+  path: IPathPostV1AuthProviderOauth;
+  formData: IFormDataPostV1AuthProviderOauth;
+}
 export interface IPathGetV1OfferingsSlug {
   slug: string;
 }
@@ -155,24 +184,36 @@ export interface IGetV1OfferingsSlugRequest {
   query: IQueryGetV1OfferingsSlug;
 }
 export type IFileType$$ = string;
-export interface IOptionsBase$$ {
-  body?: any;
-  query?: any;
-  header?: any;
-  formData?: any;
+export interface IOptionsBaseT<T> {
+  body?: T;
+  query?: T;
+  header?: T;
+  formData?: T;
+  path?: T;
+  url: string;
+  method: string;
 }
 export abstract class API<TOptions = {}> {
-  abstract call(param: any & TOptions): Promise<any>;
+  abstract call(param: IOptionsBaseT<any> & TOptions): Promise<any>;
+
+  // auth with social networks
+  get(
+    param: IPostV1AuthProviderOauthRequest & TOptions
+  ): Promise<AuthSerializer>;
 
   // Get Offering
   get(
     param: IGetV1OfferingsSlugRequest & TOptions
   ): Promise<OfferingSerializer>;
-  get({ path, ...options }: any): Promise<any> {
-    options.url = !path
+  get(options: IOptionsBaseT<{}> & TOptions): Promise<any> {
+    options.url = !options.path
       ? options.url
-      : Object.keys(path).reduce(
-          (memo, key) => memo.replace(new RegExp('{' + key + '}'), path[key]),
+      : Object.keys(options.path).reduce(
+          (memo, key) =>
+            memo.replace(
+              new RegExp('{' + key + '}'),
+              (options.path as any)[key]
+            ),
           options.url
         );
     return this.call(options);
@@ -184,8 +225,11 @@ export abstract class API<TOptions = {}> {
 exports[`main generate 2`] = `
 Object {
   "method": "GET",
+  "path": Object {
+    "slug": "test",
+  },
   "query": Object {
-    "include": "test",
+    "include": "1234",
   },
   "url": "/v1/offerings/test",
 }

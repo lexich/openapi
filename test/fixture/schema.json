@@ -5,6 +5,54 @@
   "host": "localhost:3000",
   "tags": [{ "name": "v1", "description": "Operations about v1s" }],
   "paths": {
+    "/v1/auth/{provider}/oauth": {
+      "post": {
+        "description": "auth with social networks",
+        "produces": ["application/json"],
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "description": "Provider",
+            "type": "string",
+            "enum": ["facebook", "twitter"],
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "oauth_token",
+            "description": "oAuth Token",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "oauth_token_secret",
+            "description": "twitter oAuth token secret",
+            "type": "string",
+            "required": false
+          },
+          {
+            "in": "formData",
+            "name": "referral_token",
+            "description": "User referral token",
+            "type": "string",
+            "required": false
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "auth with social networks",
+            "schema": {
+              "$ref": "#/definitions/AuthSerializer"
+            }
+          }
+        },
+        "tags": ["v1"],
+        "operationId": "postV1AuthProviderOauth"
+      }
+    },
     "/v1/offerings/{slug}": {
       "get": {
         "description": "Get Offering",
@@ -37,6 +85,46 @@
     }
   },
   "definitions": {
+    "AuthSerializer": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "attributes": {
+              "type": "object",
+              "properties": {
+                "first_name": {
+                  "type": "string"
+                },
+                "last_name": {
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "avatar_url": {
+                  "type": "string"
+                },
+                "jwt_token": {
+                  "type": "string"
+                },
+                "need_set_password": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "Set user password"
+    },
     "OfferingSerializer": {
       "type": "object",
       "properties": {

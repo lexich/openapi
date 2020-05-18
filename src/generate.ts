@@ -235,8 +235,8 @@ function generateAPI(docs: Swagger.Spec) {
   });
 
   result.push(
-    `get({ path, ...options}: any): Promise<any> {`,
-    `options.url = !path ? options.url : Object.keys(path).reduce((memo, key) => memo.replace(new RegExp('{' + key + '}'), path[key]), options.url);`,
+    `get(options: IOptionsBaseT<{}> & TOptions): Promise<any> {`,
+    `options.url = !options.path ? options.url : Object.keys(options.path).reduce((memo, key) => memo.replace(new RegExp('{' + key + '}'), (options.path as any)[key]), options.url);`,
     `return this.call(options);`,
     `}`
   );
@@ -244,9 +244,9 @@ function generateAPI(docs: Swagger.Spec) {
   return [
     typesResult.join('\n'),
     'export type IFileType$$ = string;',
-    'export interface IOptionsBase$$ { body?: any; query?: any; header?: any; formData?: any; }',
+    'export interface IOptionsBaseT<T> { body?: T; query?: T; header?: T; formData?: T; path?: T; url: string; method: string }',
     'export abstract class API<TOptions = {}> {',
-    'abstract call(param: any & TOptions): Promise<any>;\n',
+    'abstract call(param: IOptionsBaseT<any> & TOptions): Promise<any>;\n',
     result.join('\n'),
     '}',
   ].join('\n');
