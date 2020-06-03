@@ -15,7 +15,7 @@ const TMETHOD: TKey[] = [
 ];
 
 function normalize(modelName: string) {
-  return modelName.replace(/[^a-zA-Z0-9_]/g, '_');
+  return modelName.replace(/[^a-zA-Z0-9_]/g, '');
 }
 
 function getRefName(ref: string) {
