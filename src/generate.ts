@@ -14,8 +14,12 @@ const TMETHOD: TKey[] = [
   'patch',
 ];
 
+function normalize(modelName: string) {
+  return modelName.replace(/[^a-zA-Z0-9_]/g, '_');
+}
+
 function getRefName(ref: string) {
-  return ref.replace(/^#\/definitions\//, '');
+  return normalize(ref.replace(/^#\/definitions\//, ''));
 }
 
 function objToString(obj: any): string {
@@ -186,7 +190,9 @@ function generateMethod(requestName: string, operation: Swagger.Operation) {
       }, [] as string[])
       .join('|') || 'unknown';
 
-  result.push(`request(param: ${requestName} & TOptions): Promise<${resultType}>;`);
+  result.push(
+    `request(param: ${requestName} & TOptions): Promise<${resultType}>;`
+  );
 
   return result.join('\n');
 }
@@ -277,7 +283,7 @@ export function generate(docs: Swagger.Spec) {
       const schema = definitions[def];
       const code = [
         schema.description ? `// ${schema.description}` : '',
-        `export interface ${def}` + generateProperties(schema),
+        `export interface ${normalize(def)}` + generateProperties(schema),
       ]
         .filter((p) => p)
         .join('\n');

@@ -45,7 +45,7 @@
           "201": {
             "description": "auth with social networks",
             "schema": {
-              "$ref": "#/definitions/AuthSerializer"
+              "$ref": "#/definitions/Test::AuthSerializer"
             }
           }
         },
@@ -85,7 +85,7 @@
     }
   },
   "definitions": {
-    "AuthSerializer": {
+    "Test::AuthSerializer": {
       "type": "object",
       "properties": {
         "data": {

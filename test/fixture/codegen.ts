@@ -1,5 +1,5 @@
 // Set user password
-export interface AuthSerializer {
+export interface Test__AuthSerializer {
   data: {
     id: string;
     type: string;
@@ -196,7 +196,7 @@ export abstract class API<TOptions = {}> {
   // auth with social networks
   request(
     param: IPostV1AuthProviderOauthRequest & TOptions
-  ): Promise<AuthSerializer>;
+  ): Promise<Test__AuthSerializer>;
 
   // Get Offering
   request(
