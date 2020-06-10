@@ -35,6 +35,20 @@
           },
           {
             "in": "formData",
+            "name": "test[test1]",
+            "description": "test1",
+            "type": "string",
+            "required": false
+          },
+          {
+            "in": "formData",
+            "name": "test[test2]",
+            "description": "test2",
+            "type": "string",
+            "required": false
+          },
+          {
+            "in": "formData",
             "name": "referral_token",
             "description": "User referral token",
             "type": "string",

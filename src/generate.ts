@@ -22,23 +22,20 @@ function getRefName(ref: string) {
   return normalize(ref.replace(/^#\/definitions\//, ''));
 }
 
-function objToString(obj: any): string {
+function stringifyLeafs(leafs: Leaf[]): string {
   const result: string[] = ['{'];
-  Object.keys(obj).forEach((k) => {
-    const val = obj[k];
-    if (k[k.length - 1] === '?') {
-      result.push(JSON.stringify(k.slice(0, k.length - 1)) + '?:');
-    } else {
-      result.push(JSON.stringify(k) + ':');
-    }
 
-    if (typeof val !== 'object') {
-      result.push(`${val};`);
+  leafs.forEach((leaf) => {
+    result.push(JSON.stringify(leaf.name));
+    result.push(leaf.required ? ':' : '?:');
+    if (Array.isArray(leaf.value)) {
+      result.push(`${stringifyLeafs(leaf.value)};`);
     } else {
-      result.push(`${objToString(val)};`);
+      result.push(`${leaf.value};`);
     }
   });
-  return result.concat('}').join('');
+  result.push('}');
+  return result.join('');
 }
 
 /** Used to match property names within property paths. */
@@ -138,6 +135,12 @@ function generateProperties(schema: Swagger.Schema): string {
 
 type TSchema = Swagger.BaseSchema & { name: string; required: boolean };
 
+interface Leaf {
+  name: string;
+  value: string | Leaf[];
+  required: boolean;
+}
+
 function transformInputSchema<T extends TSchema>(
   params: T[] | undefined,
   def = 'null'
@@ -145,21 +148,47 @@ function transformInputSchema<T extends TSchema>(
   if (!params || !params.length) {
     return def;
   }
-  const obj = params.reduce((memo: any, param: T) => {
-    const namePath = stringToPath(param.name);
-    let ptr = memo;
-    const value = generateProperties(param);
-    for (let i = 0, iLen = namePath.length; i < iLen; i++) {
-      if (i + 1 === iLen) {
-        const name = param.required ? namePath[i] : `${namePath[i]}?`;
-        ptr[name] = value;
-      } else {
-        ptr = ptr[namePath[i]] ?? (ptr[namePath[i]] = {});
+  const obj = params.reduce(
+    (memo: Leaf, param: T) => {
+      const namePath = stringToPath(param.name);
+      const value = generateProperties(param);
+      let ptr = memo;
+
+      for (let i = 0, iLen = namePath.length; i < iLen; i++) {
+        const name = namePath[i];
+        let item: Leaf = Array.isArray(ptr.value)
+          ? ptr.value.find((it) => it.name === name)
+          : // it's ok :)
+            (undefined as any);
+        if (!item) {
+          const leaf: Leaf = {
+            name: namePath[i],
+            required: !!param.required,
+            value,
+          };
+          item = leaf;
+          if (Array.isArray(ptr.value)) {
+            ptr.value.push(leaf);
+          } else {
+            // sorry I override it
+            ptr.value = [leaf];
+          }
+        } else {
+          if (!item.required) {
+            item.required = param.required;
+          }
+        }
+        ptr = item;
       }
-    }
-    return memo;
-  }, {} as any);
-  return objToString(obj);
+      return memo;
+    },
+    {
+      name: 'root',
+      required: true,
+      value: [],
+    } as Leaf
+  );
+  return stringifyLeafs(obj.value as Leaf[]);
 }
 
 function generateMethod(requestName: string, operation: Swagger.Operation) {
@@ -222,17 +251,26 @@ function generateAPI(docs: Swagger.Spec) {
         if (val !== 'null') {
           const name = `I${upperFirst(groupName)}${NameParam}`;
           typesResult.push(`export interface ${name} ${val}`);
-          memo[groupName] = name;
+          memo.push({
+            name: groupName,
+            value: name,
+            required: true,
+          });
         }
         return memo;
-      }, {} as Record<string, string>);
+      }, [] as Leaf[]);
 
       const RequestName = `I${NameParam}Request`;
-      const typeParams = objToString({
-        method: JSON.stringify(method.toUpperCase()),
-        url: JSON.stringify(url),
+      const typeParamsList = [
+        {
+          name: 'method',
+          value: JSON.stringify(method.toUpperCase()),
+          required: true,
+        },
+        { name: 'url', value: JSON.stringify(url), required: true },
         ...options,
-      });
+      ];
+      const typeParams = stringifyLeafs(typeParamsList);
       typesResult.push(`export interface ${RequestName} ${typeParams}`);
 
       const res = generateMethod(RequestName, path[method]!);

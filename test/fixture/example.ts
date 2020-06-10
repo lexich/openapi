@@ -1,9 +1,9 @@
-import { API, AuthSerializer } from './codegen';
+import { API, TestAuthSerializer } from './codegen';
 
 class Client extends API {
   call(param: any) {
     if (param.url.indexOf('/v1/auth/') === 0) {
-      const result: AuthSerializer = {
+      const result: TestAuthSerializer = {
         data: {
           id: '1',
           type: 'test',
