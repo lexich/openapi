@@ -155,16 +155,16 @@ export interface OfferingSerializer {
   };
 }
 export interface IPathPostV1AuthProviderOauth {
-  provider: 'facebook' | 'twitter';
+  provider: 'facebook' | 'twitter' /* Provider */;
 }
 export interface IFormDataPostV1AuthProviderOauth {
-  oauth_token: string;
-  oauth_token_secret?: string;
-  test?: { test1?: string; test2?: string };
-  referral_token?: string;
+  oauth_token: string /* oAuth Token */;
+  oauth_token_secret?: string /* twitter oAuth token secret */;
+  test?: { test1?: string /* test1 */; test2?: string /* test2 */ };
+  referral_token?: string /* User referral token */;
 }
 export interface IHeaderPostV1AuthProviderOauth {
-  'X-User-Token'?: string;
+  'X-User-Token'?: string /* User JWT */;
 }
 export interface IPostV1AuthProviderOauthRequest {
   method: 'POST';
@@ -174,10 +174,13 @@ export interface IPostV1AuthProviderOauthRequest {
   header?: IHeaderPostV1AuthProviderOauth;
 }
 export interface IPathGetV1OfferingsSlug {
-  slug: string;
+  slug: string /* Offering Slug */;
 }
 export interface IQueryGetV1OfferingsSlug {
-  include?: string;
+  include?: string /* perks, documents, location_restricted,
+                        tags, press, pitch_sections, faqs,
+                        risks, roles_team_members, questions,
+                        form_c, investment_reasons, investment_reasons.user including. Pass separated with `,` in any order */;
 }
 export interface IGetV1OfferingsSlugRequest {
   method: 'GET';

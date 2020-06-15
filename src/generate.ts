@@ -48,6 +48,9 @@ function stringifyLeafs(leafs: Leaf[]): string {
     } else {
       result.push(`${leaf.value};`);
     }
+    if (leaf.description) {
+      result.push(` /* ${leaf.description} */\n`);
+    }
   });
   result.push('}');
   return result.join('');
@@ -153,6 +156,7 @@ type TSchema = Swagger.BaseSchema & { name: string; required: boolean };
 interface Leaf {
   name: string;
   value: string | Leaf[];
+  description: string | undefined;
   required: boolean | undefined;
 }
 
@@ -179,6 +183,7 @@ function transformSchema2Leafs<T extends TSchema>(
           const leaf: Leaf = {
             name: namePath[i],
             required: !!param.required,
+            description: param.description,
             value,
           };
           item = leaf;
@@ -186,6 +191,7 @@ function transformSchema2Leafs<T extends TSchema>(
             ptr.value.push(leaf);
           } else {
             // sorry I override it
+            ptr.description = undefined;
             ptr.value = [leaf];
           }
         } else {
@@ -199,6 +205,7 @@ function transformSchema2Leafs<T extends TSchema>(
     },
     {
       name: 'root',
+      description: undefined,
       required: undefined,
       value: [],
     } as Leaf
@@ -273,6 +280,7 @@ function generateAPI(docs: Swagger.Spec) {
             memo.push({
               name: groupName,
               value: name,
+              description: undefined,
               required: isRequired,
             });
           }
@@ -284,10 +292,16 @@ function generateAPI(docs: Swagger.Spec) {
       const typeParamsList = [
         {
           name: 'method',
+          description: undefined,
           value: JSON.stringify(method.toUpperCase()),
           required: true,
         },
-        { name: 'url', value: JSON.stringify(url), required: true },
+        {
+          name: 'url',
+          value: JSON.stringify(url),
+          required: true,
+          description: undefined,
+        },
         ...options,
       ];
       const typeParams = stringifyLeafs(typeParamsList);
