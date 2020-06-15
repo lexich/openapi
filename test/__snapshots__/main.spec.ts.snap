@@ -166,11 +166,15 @@ export interface IFormDataPostV1AuthProviderOauth {
   test?: { test1?: string; test2?: string };
   referral_token?: string;
 }
+export interface IHeaderPostV1AuthProviderOauth {
+  'X-User-Token'?: string;
+}
 export interface IPostV1AuthProviderOauthRequest {
   method: 'POST';
   url: '/v1/auth/{provider}/oauth';
   path: IPathPostV1AuthProviderOauth;
   formData: IFormDataPostV1AuthProviderOauth;
+  header?: IHeaderPostV1AuthProviderOauth;
 }
 export interface IPathGetV1OfferingsSlug {
   slug: string;
@@ -182,7 +186,7 @@ export interface IGetV1OfferingsSlugRequest {
   method: 'GET';
   url: '/v1/offerings/{slug}';
   path: IPathGetV1OfferingsSlug;
-  query: IQueryGetV1OfferingsSlug;
+  query?: IQueryGetV1OfferingsSlug;
 }
 export type IFileType$$ = string;
 export interface IOptionsBaseT<T> {

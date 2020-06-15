@@ -22,12 +22,27 @@ function getRefName(ref: string) {
   return normalize(ref.replace(/^#\/definitions\//, ''));
 }
 
+function isAnyLeafRequired(leaf: Leaf) {
+  if (leaf.required) {
+    return true;
+  }
+  if (leaf.required === false) {
+    return false;
+  }
+  if (Array.isArray(leaf.value)) {
+    if (leaf.value.find(isAnyLeafRequired)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function stringifyLeafs(leafs: Leaf[]): string {
   const result: string[] = ['{'];
 
   leafs.forEach((leaf) => {
     result.push(JSON.stringify(leaf.name));
-    result.push(leaf.required ? ':' : '?:');
+    result.push(isAnyLeafRequired(leaf) ? ':' : '?:');
     if (Array.isArray(leaf.value)) {
       result.push(`${stringifyLeafs(leaf.value)};`);
     } else {
@@ -138,10 +153,10 @@ type TSchema = Swagger.BaseSchema & { name: string; required: boolean };
 interface Leaf {
   name: string;
   value: string | Leaf[];
-  required: boolean;
+  required: boolean | undefined;
 }
 
-function transformInputSchema<T extends TSchema>(
+function transformSchema2Leafs<T extends TSchema>(
   params: T[] | undefined,
   def = 'null'
 ) {
@@ -184,11 +199,11 @@ function transformInputSchema<T extends TSchema>(
     },
     {
       name: 'root',
-      required: true,
+      required: undefined,
       value: [],
     } as Leaf
   );
-  return stringifyLeafs(obj.value as Leaf[]);
+  return obj.value as Leaf[];
 }
 
 function generateMethod(requestName: string, operation: Swagger.Operation) {
@@ -247,15 +262,20 @@ function generateAPI(docs: Swagger.Spec) {
 
       const NameParam = upperFirst(operation.operationId!);
       const options = Object.keys(groups).reduce((memo, groupName) => {
-        const val = transformInputSchema(groups[groupName]);
-        if (val !== 'null') {
-          const name = `I${upperFirst(groupName)}${NameParam}`;
-          typesResult.push(`export interface ${name} ${val}`);
-          memo.push({
-            name: groupName,
-            value: name,
-            required: true,
-          });
+        const schema = groups[groupName];
+        const leafs = transformSchema2Leafs(schema);
+        if (typeof leafs !== 'string') {
+          const val = stringifyLeafs(leafs);
+          if (val !== 'null') {
+            const name = `I${upperFirst(groupName)}${NameParam}`;
+            typesResult.push(`export interface ${name} ${val}`);
+            const isRequired = !!leafs.find(isAnyLeafRequired);
+            memo.push({
+              name: groupName,
+              value: name,
+              required: isRequired,
+            });
+          }
         }
         return memo;
       }, [] as Leaf[]);

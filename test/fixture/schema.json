@@ -53,6 +53,13 @@
             "description": "User referral token",
             "type": "string",
             "required": false
+          },
+          {
+            "in": "header",
+            "name": "X-User-Token",
+            "description": "User JWT",
+            "type": "string",
+            "required": false
           }
         ],
         "responses": {
