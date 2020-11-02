@@ -144,6 +144,14 @@ function generateProperties(schema: Swagger.Schema): string {
 
     case 'file':
       result.push('IFileType$$');
+      break;
+
+    case undefined:
+      const ptr = (schema as any);
+      if (ptr.schema) {
+        result.push(getRefName(ptr.schema.$ref));
+      }
+      break;
     default:
       break;
   }
