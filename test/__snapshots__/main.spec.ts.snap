@@ -157,6 +157,20 @@ export interface OfferingSerializer {
     };
   };
 }
+export interface patchV1OfferingsOfferingSlugTerms {
+  custom_terms_batch: Array<{
+    text: string;
+    checkbox?: boolean;
+    spv_deal?: boolean;
+    republic_funding_portal?: boolean;
+    capital_r?: boolean;
+    republic_advisory_services?: boolean;
+    republic_core?: boolean;
+    republic_real_estate?: boolean;
+    fig?: boolean;
+    republic_labs?: boolean;
+  }>;
+}
 export interface IPathPostV1AuthProviderOauth {
   provider: 'facebook' | 'twitter' /* Provider */;
 }
@@ -191,6 +205,23 @@ export interface IGetV1OfferingsSlugRequest {
   path: IPathGetV1OfferingsSlug;
   query?: IQueryGetV1OfferingsSlug;
 }
+export interface IHeaderPatchV1OfferingsOfferingSlugTerms {
+  'X-User-Token': string /* User JWT */;
+  'X-Csrf-Token'?: string /* CSRF Token */;
+}
+export interface IPathPatchV1OfferingsOfferingSlugTerms {
+  offering_slug: string /* Offering\`s slug */;
+}
+export interface IBodyPatchV1OfferingsOfferingSlugTerms {
+  V1OfferingsOfferingSlugTerms: patchV1OfferingsOfferingSlugTerms;
+}
+export interface IPatchV1OfferingsOfferingSlugTermsRequest {
+  method: 'PATCH';
+  url: '/v1/offerings/{offering_slug}/terms';
+  header: IHeaderPatchV1OfferingsOfferingSlugTerms;
+  path: IPathPatchV1OfferingsOfferingSlugTerms;
+  body: IBodyPatchV1OfferingsOfferingSlugTerms;
+}
 export type IFileType$$ = string;
 export interface IOptionsBaseT<T> {
   body?: T;
@@ -213,6 +244,11 @@ export abstract class API<TOptions = {}> {
   request(
     param: IGetV1OfferingsSlugRequest & TOptions
   ): Promise<OfferingSerializer>;
+
+  // Add or Update Custom Terms for Offering
+  request(
+    param: IPatchV1OfferingsOfferingSlugTermsRequest & TOptions
+  ): Promise<patchV1OfferingsOfferingSlugTerms>;
   request(params: IOptionsBaseT<{}> & TOptions): Promise<any> {
     const options: any = params;
     if (options.path) {

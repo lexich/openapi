@@ -103,6 +103,60 @@
         "tags": ["v1"],
         "operationId": "getV1OfferingsSlug"
       }
+    },
+    "/v1/offerings/{offering_slug}/terms": {
+      "patch": {
+        "description": "Add or Update Custom Terms for Offering",
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-User-Token",
+            "description": "User JWT",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "header",
+            "name": "X-Csrf-Token",
+            "description": "CSRF Token",
+            "type": "string",
+            "required": false
+          },
+          {
+            "in": "path",
+            "name": "offering_slug",
+            "description": "Offering`s slug",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "V1OfferingsOfferingSlugTerms",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/patchV1OfferingsOfferingSlugTerms"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Add or Update Custom Terms for Offering",
+            "schema": {
+              "$ref": "#/definitions/patchV1OfferingsOfferingSlugTerms"
+            }
+          }
+        },
+        "tags": [
+          "v1"
+        ],
+        "operationId": "patchV1OfferingsOfferingSlugTerms"
+      }
     }
   },
   "definitions": {
@@ -421,6 +475,61 @@
         }
       },
       "description": "Get all offerings"
+    },
+    "patchV1OfferingsOfferingSlugTerms": {
+      "type": "object",
+      "properties": {
+        "custom_terms_batch": {
+          "type": "array",
+          "description": "Array of terms ex: [\n                        {\"text\":\"term1\",\"checkbox\":false},\n                        {text: \"term2\"},\n                        {\"text\":\"term3\",\"checkbox\":false}\n                        ]",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "Term text"
+              },
+              "checkbox": {
+                "type": "boolean",
+                "description": "Term checkbox"
+              },
+              "spv_deal": {
+                "type": "boolean",
+                "description": "Term SPV deal"
+              },
+              "republic_funding_portal": {
+                "type": "boolean",
+                "description": "Term Republic Funding Portal"
+              },
+              "capital_r": {
+                "type": "boolean",
+                "description": "Term Capital R"
+              },
+              "republic_advisory_services": {
+                "type": "boolean",
+                "description": "Term Republic Advisory Services"
+              },
+              "republic_core": {
+                "type": "boolean",
+                "description": "Term Republic Core"
+              },
+              "republic_real_estate": {
+                "type": "boolean",
+                "description": "Term Republic Real Estate"
+              },
+              "fig": {
+                "type": "boolean",
+                "description": "Term Fig"
+              },
+              "republic_labs": {
+                "type": "boolean",
+                "description": "Term Republic Labs"
+              }
+            },
+            "required": ["text"]
+          }
+        }
+      }
     }
   }
 }

@@ -96,9 +96,12 @@ function generateProperties(schema: Swagger.Schema): string {
       {
         result.push('{');
         const props = schema.properties ?? {};
+        const required = schema.required;
         Object.keys(props).forEach((key) => {
           const p = props[key];
-          result.push(`${key}: ${generateProperties(p)};`);
+          const optional = !required || required.indexOf(key) >= 0 ? '' : '?';
+          const line = `${key}${optional}: ${generateProperties(p)};`
+          result.push(line);
         });
         result.push('}');
       }
