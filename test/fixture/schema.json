@@ -494,7 +494,7 @@
                 "description": "Term checkbox"
               },
               "spv_deal": {
-                "type": "boolean",
+                "type": "text",
                 "description": "Term SPV deal"
               },
               "republic_funding_portal": {

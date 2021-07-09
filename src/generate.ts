@@ -119,6 +119,7 @@ function generateProperties(schema: Swagger.Schema): string {
       break;
 
     case 'string':
+    case 'text':
       if (schema.enum) {
         result.push(schema.enum.map((p) => JSON.stringify(p)).join('|'));
       } else {

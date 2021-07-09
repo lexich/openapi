@@ -158,7 +158,7 @@ export interface patchV1OfferingsOfferingSlugTerms {
   custom_terms_batch: Array<{
     text: string;
     checkbox?: boolean;
-    spv_deal?: boolean;
+    spv_deal?: string;
     republic_funding_portal?: boolean;
     capital_r?: boolean;
     republic_advisory_services?: boolean;
