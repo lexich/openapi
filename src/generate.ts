@@ -182,7 +182,7 @@ function transformSchema2Leafs<T extends TSchema>(
   const obj = params.reduce(
     (memo: Leaf, param: T) => {
       const namePath = stringToPath(param.name);
-      const value = generateProperties(param);
+      const value = generateProperties(param as any);
       let ptr = memo;
 
       for (let i = 0, iLen = namePath.length; i < iLen; i++) {

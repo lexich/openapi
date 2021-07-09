@@ -16,7 +16,7 @@ describe('openapi', () => {
     const code = transform(data);
     expect(code).toMatchSnapshot();
     const filePath = path.resolve(__dirname, 'fixture', 'codegen.ts');
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       fs.writeFile(filePath, code, (err) => {
         err ? reject(err) : resolve();
       });
