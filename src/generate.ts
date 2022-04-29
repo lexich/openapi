@@ -14,12 +14,12 @@ const TMETHOD: TKey[] = [
   'patch',
 ];
 
-function normalize(modelName: string) {
-  return modelName.replace(/[^a-zA-Z0-9]/g, '');
+function normalize(modelName?: string) {
+  return modelName?.replace(/[^a-zA-Z0-9]/g, '');
 }
 
-function getRefName(ref: string) {
-  return normalize(ref.replace(/^#\/definitions\//, ''));
+function getRefName(ref?: string) {
+  return normalize(ref?.replace(/^#\/definitions\//, ''));
 }
 
 function isAnyLeafRequired(leaf: Leaf) {
@@ -88,7 +88,7 @@ function generateProperties(schema: Swagger.Schema): string {
   const result: string[] = [];
 
   if (schema.$ref) {
-    result.push(getRefName(schema.$ref));
+    result.push(getRefName(schema.$ref)!);
   }
 
   switch (schema.type as string) {
@@ -153,7 +153,7 @@ function generateProperties(schema: Swagger.Schema): string {
     case undefined:
       const ptr = (schema as any);
       if (ptr.schema) {
-        result.push(getRefName(ptr.schema.$ref));
+        result.push(getRefName(ptr.schema.$ref)!);
       }
       break;
     default:
@@ -239,7 +239,7 @@ function generateMethod(requestName: string, operation: Swagger.Operation) {
         const ref = item as Swagger.Reference;
 
         if (ref.$ref) {
-          memo.push(getRefName(ref.$ref));
+          memo.push(getRefName(ref.$ref)!);
         } else {
           const res = item as Swagger.Response;
 
